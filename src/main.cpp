@@ -20,10 +20,11 @@ int main(int argc, char** argv)
 {
   cxxopts::Options options(argv[0], " - A evdev/uinput wrangler");
   options.add_options()
-    ("d,device", "Input device to read from, eg. /dev/input/event0",
+    ("i,device", "Input device to read from, eg. /dev/input/event0",
      cxxopts::value<std::string>(), "PATH")
     ("p,plugin", "Path to plugin", cxxopts::value<std::string>(), "PATH")
     ("g,grab", "Grab the input device, preventing others from accessing it")
+    ("d,daemonize", "Daemonize process")
     ("h,help", "Print help");
 
   if(argc == 1)
@@ -48,9 +49,9 @@ int main(int argc, char** argv)
     return EXIT_SUCCESS;
   }
 
-  if(options.count("d") != 1)
+  if(options.count("i") != 1)
   {
-    std::cerr << "ERROR: exactly one device is required" << std::endl;
+    std::cerr << "ERROR: exactly one input device is required" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -60,7 +61,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  EvdevDevice evdev(options["d"].as<std::string>());
+  EvdevDevice evdev(options["i"].as<std::string>());
 
   if(!evdev.ready())
   {
@@ -79,6 +80,12 @@ int main(int argc, char** argv)
   if(options.count("g") && !evdev.grab(true))
   {
     std::cerr << "ERROR: Could not grab input device" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  if(options.count("d") && daemon(1, 0) == -1)
+  {
+    std::cerr << "ERROR: Could not daemonize, error code " << errno << std::endl;
     return EXIT_FAILURE;
   }
 

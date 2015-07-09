@@ -20,9 +20,10 @@ int main(int argc, char** argv)
 {
   cxxopts::Options options(argv[0], " - A evdev/uinput wrangler");
   options.add_options()
-    ("d,device", "evdev device to read from, eg. /dev/input/event0",
+    ("d,device", "Input device to read from, eg. /dev/input/event0",
      cxxopts::value<std::string>(), "PATH")
-    ("p,plugin", "path to plugin", cxxopts::value<std::string>(), "PATH")
+    ("p,plugin", "Path to plugin", cxxopts::value<std::string>(), "PATH")
+    ("g,grab", "Grab the input device, preventing others from accessing it")
     ("h,help", "Print help");
 
   if(argc == 1)
@@ -72,6 +73,12 @@ int main(int argc, char** argv)
   if(!module.ready())
   {
     std::cerr << "ERROR: Could not open plugin" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  if(options.count("g") && !evdev.grab(true))
+  {
+    std::cerr << "ERROR: Could not grab input device" << std::endl;
     return EXIT_FAILURE;
   }
 

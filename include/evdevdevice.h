@@ -17,6 +17,7 @@ public:
   ~EvdevDevice();
   input_event poll();
   bool ready() const;
+  bool grab(bool value);
 private:
   int _fd;
   std::array<input_event, 64> _events;
@@ -65,6 +66,10 @@ input_event EvdevDevice::poll()
 bool EvdevDevice::ready() const
 {
   return _fd != 0;
+}
+bool EvdevDevice::grab(bool value)
+{
+  return _fd && ioctl(_fd, EVIOCGRAB, value ? 1 : 0) >= 0;
 }
 
 #endif

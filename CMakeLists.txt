@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 project(funkeymonkey)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 include_directories(include)
 list(APPEND CMAKE_CXX_FLAGS -std=c++11)
 

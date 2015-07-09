@@ -11,7 +11,7 @@
 
 volatile sig_atomic_t done = 0;
 
-void term(int signum)
+void term(int)
 {
   done = 1;
 }

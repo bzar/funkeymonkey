@@ -11,3 +11,4 @@ target_link_libraries(funkeymonkey dl)
 
 add_library(testmodule SHARED modules/testmodule.cpp)
 add_library(toymodule SHARED modules/toymodule.cpp)
+add_library(keyboard SHARED modules/keyboard.cpp)

@@ -20,8 +20,8 @@ int main(int argc, char** argv)
 {
   cxxopts::Options options(argv[0], " - A evdev/uinput wrangler");
   options.add_options()
-    ("i,device", "Input device to read from, eg. /dev/input/event0",
-     cxxopts::value<std::string>(), "PATH")
+    ("i,device", "Input device to read from, eg. /dev/input/event0, multiple can be provided",
+     cxxopts::value<std::vector<std::string>>(), "PATH")
     ("p,plugin", "Path to plugin", cxxopts::value<std::string>(), "PATH")
     ("g,grab", "Grab the input device, preventing others from accessing it")
     ("d,daemonize", "Daemonize process")
@@ -49,9 +49,9 @@ int main(int argc, char** argv)
     return EXIT_SUCCESS;
   }
 
-  if(options.count("i") != 1)
+  if(options.count("i") < 1)
   {
-    std::cerr << "ERROR: exactly one input device is required" << std::endl;
+    std::cerr << "ERROR: at least one input device is required" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  EvdevDevice evdev(options["i"].as<std::string>());
+  EvdevDevice evdev(options["i"].as<std::vector<std::string>>());
 
   if(!evdev.ready())
   {

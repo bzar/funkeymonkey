@@ -13,6 +13,9 @@ class KeyBehaviors
 public:
   void passthrough(unsigned int code);
   void map(unsigned int code, unsigned int result);
+  void altmap(unsigned int code, bool* flag, 
+              unsigned int regular, 
+              unsigned int alternative);
   void complex(unsigned int code, std::function<void(int)> function);
   void handle(unsigned int code, int value);
 
@@ -20,9 +23,11 @@ private:
   struct KeyBehavior
   {
     KeyBehavior() : type(PASSTHROUGH), mapping(0), function() {}
-    enum Type  { PASSTHROUGH, MAPPED, COMPLEX };
+    enum Type  { PASSTHROUGH, MAPPED, ALTMAPPED, COMPLEX };
     Type type;
     int mapping;
+    int alternative;
+    bool* flag;
     std::function<void(int)> function;
   };
 
@@ -90,6 +95,18 @@ void KeyBehaviors<FIRST_KEY, LAST_KEY>::map(unsigned int code, unsigned int resu
 }
 
 template<int FIRST_KEY, int LAST_KEY>
+void KeyBehaviors<FIRST_KEY, LAST_KEY>::altmap(unsigned int code, bool* flag,
+    unsigned int regular, 
+    unsigned int alternative)
+{
+  auto& b = behaviors.at(code - FIRST_KEY);
+  b.type = KeyBehavior::MAPPED;
+  b.mapping = regular;
+  b.alternative = alternative;
+  b.flag = flag;
+}
+
+template<int FIRST_KEY, int LAST_KEY>
 void KeyBehaviors<FIRST_KEY, LAST_KEY>::complex(unsigned int code, std::function<void(int)> function)
 {
   auto& b = behaviors.at(code - FIRST_KEY);
@@ -109,6 +126,9 @@ void KeyBehaviors<FIRST_KEY, LAST_KEY>::handle(unsigned int code, int value)
     case KeyBehavior::MAPPED:
       out->send(EV_KEY, kb.mapping, value);
       break;
+    case KeyBehavior::ALTMAPPED:
+      out->send(EV_KEY, *kb.flag ? kb.alternative : kb.mapping, value);
+      break; 
     case KeyBehavior::COMPLEX:
       kb.function(value);
       break;

@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <regex>
 
 #include <memory.h>
 #include <signal.h>
@@ -16,15 +17,39 @@ void term(int)
   done = 1;
 }
 
+void process(EvdevDevice& evdev, FunKeyMonkeyModule& module)
+{
+  struct sigaction action;
+  memset(&action, 0, sizeof(struct sigaction));
+  action.sa_handler = term;
+  sigaction(SIGINT, &action, NULL);
+
+  module.init();
+
+  while(!done)
+  {
+    input_event e = evdev.poll();
+    if(e.type != 0)
+    {
+      module.handle(e);
+    }
+  }
+
+  module.destroy();
+}
+
 int main(int argc, char** argv)
 {
   cxxopts::Options options(argv[0], " - A evdev/uinput wrangler");
   options.add_options()
     ("i,device", "Input device to read from, eg. /dev/input/event0, multiple can be provided",
      cxxopts::value<std::vector<std::string>>(), "PATH")
+    ("m,match-devices", "Regular expression to match device strings (format: '<vendor>,<product>,<version>,<name>') with, matching will be read, multiple can be provided",
+     cxxopts::value<std::vector<std::string>>(), "PATH")
     ("p,plugin", "Path to plugin", cxxopts::value<std::string>(), "PATH")
     ("g,grab", "Grab the input device, preventing others from accessing it")
     ("d,daemonize", "Daemonize process")
+    ("l,list-devices", "List available devices")
     ("h,help", "Print help");
 
   if(argc == 1)
@@ -49,9 +74,24 @@ int main(int argc, char** argv)
     return EXIT_SUCCESS;
   }
 
-  if(options.count("i") < 1)
+  if(options.count("l"))
   {
-    std::cerr << "ERROR: at least one input device is required" << std::endl;
+    std::vector<EvdevDevice::Information> devices = EvdevDevice::availableDevices();
+    for(EvdevDevice::Information const& device : devices)
+    {
+      std::cout << std::hex
+        << device.path << ": "
+        << device.vendor << "," 
+        << device.product << ","
+        << device.version << ","
+        << device.name << std::endl;
+    }
+    return EXIT_SUCCESS;
+  }
+
+  if(options.count("i") < 1 && options.count("m") < 1)
+  {
+    std::cerr << "ERROR: at least one input device path or match pattern is required" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -61,7 +101,31 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  EvdevDevice evdev(options["i"].as<std::vector<std::string>>());
+  std::vector<std::string> devicePaths = options["i"].as<std::vector<std::string>>();
+
+  if(options.count("m") > 0)
+  {
+    std::vector<EvdevDevice::Information> devices = EvdevDevice::availableDevices();
+    for(std::string const& pattern : options["m"].as<std::vector<std::string>>())
+    {
+      std::regex re(pattern);
+      for(EvdevDevice::Information const& info : devices)
+      {
+        std::ostringstream deviceString;
+        deviceString << std::hex 
+          << info.vendor << ","
+          << info.product << ","
+          << info.version << ","
+          << info.name;
+        if(std::regex_search(deviceString.str(), re))
+        {
+          devicePaths.push_back(info.path);
+        }
+      }
+    }
+  }
+
+  EvdevDevice evdev(devicePaths);
 
   if(!evdev.ready())
   {
@@ -89,23 +153,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  struct sigaction action;
-  memset(&action, 0, sizeof(struct sigaction));
-  action.sa_handler = term;
-  sigaction(SIGINT, &action, NULL);
-
-  module.init();
-
-  while(!done)
-  {
-    input_event e = evdev.poll();
-    if(e.type != 0)
-    {
-      module.handle(e);
-    }
-  }
-
-  module.destroy();
+  process(evdev, module);
 
   return EXIT_SUCCESS;
 }

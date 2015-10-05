@@ -26,15 +26,11 @@ bool menu; // whether we're in the menu or not.
 UinputDevice* out;
 void init()
 {
-  std::cout << "Init... ";
+  std::cout << "Init!";
   menu = 0; // do not start on menu
   out = new UinputDevice("/dev/uinput", BUS_USB, "FunKeySNES", 1, 1, 1, {
     { EV_KEY, { KEY_Q, KEY_W, KEY_A, KEY_S, KEY_Z, KEY_X, KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT, KEY_ESC, KEY_F1, KEY_F2 } }
   });
-  if(out)
-    std::cout << "completed!\n";
-  else
-    std::cout << "no work!  do you have sufficient privileges (try sudo)?\n";
 }
 void handle(input_event const& e)
 {

@@ -28,10 +28,24 @@ void process(EvdevDevice& evdev, FunKeyMonkeyModule& module)
 
   while(!done)
   {
-    input_event e = evdev.poll();
-    if(e.type != 0)
+    auto result = evdev.poll();
+    switch(result.status)
     {
-      module.handle(e);
+      case EvdevDevice::POLL_OK:
+      {
+        module.handle(result.event);
+        break;
+      }
+      case EvdevDevice::POLL_TIMEOUT:
+      {
+        break;
+      }
+      case EvdevDevice::POLL_ERROR:
+      {
+        std::cerr << "ERROR: Reading devices failed." << std::endl;
+        done = 1;
+        break;
+      }
     }
   }
 

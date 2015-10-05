@@ -35,6 +35,13 @@ public:
     std::string path;
   };
 
+  enum PollStatus { POLL_OK, POLL_TIMEOUT, POLL_ERROR };
+  struct PollResult
+  {
+    PollStatus status;
+    input_event event;
+  };
+
   static std::vector<Information> availableDevices();
 
   explicit EvdevDevice(std::vector<std::string> const& paths);
@@ -42,9 +49,10 @@ public:
   EvdevDevice(EvdevDevice const&) = delete;
   ~EvdevDevice();
   bool addDevice(std::string const& path);
-  input_event poll();
+  PollResult poll();
   bool ready() const;
   bool grab(bool value);
+
 private:
   std::vector<int> _fds;
   std::array<input_event, 64> _events;
@@ -157,10 +165,10 @@ bool EvdevDevice::addDevice(std::string const& path)
 
   return true;
 }
-input_event EvdevDevice::poll()
+EvdevDevice::PollResult EvdevDevice::poll()
 {
   if(_fds.empty())
-    return {0};
+    return {POLL_ERROR, {0}};
 
   if(_currentEvent >= _numEvents)
   {
@@ -172,8 +180,17 @@ input_event EvdevDevice::poll()
     {
       FD_SET(fd, &fds);
     }
-    if(select(FD_SETSIZE, &fds, NULL, NULL, &timeout ) <= 0)
-      return {0};
+
+    int readyFds = select(FD_SETSIZE, &fds, NULL, NULL, &timeout);
+
+    if(readyFds == 0)
+    {
+      return {POLL_TIMEOUT, {0}};
+    }
+    else if(readyFds < 0)
+    {
+      return {POLL_ERROR, {0}};
+    }
 
     // Round-robin next device to read from
     int readyFd = _fds.front();
@@ -192,11 +209,17 @@ input_event EvdevDevice::poll()
 
     // Read a set of events from device
     int numBytes = read(readyFd, _events.data(), sizeof(input_event) * _events.size());
+
+    if(numBytes <= 0)
+    {
+      return {POLL_ERROR, {0}};
+    }
+
     _numEvents = numBytes / sizeof(input_event);
     _currentEvent = 0;
     _previousDevice = readyFd;
   }
-  return _events[_currentEvent++];
+  return {POLL_OK, _events[_currentEvent++]};
 }
 
 bool EvdevDevice::ready() const

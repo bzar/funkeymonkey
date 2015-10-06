@@ -21,7 +21,7 @@ make
   -i, --device PATH         Input device to read from, eg. /dev/input/event0,
                             multiple can be provided
   -m, --match-devices PATH  Regular expression to match device strings
-                            (format: '<vendor>,<product>,<version>,<name>') with,
+                            (format: '&lt;vendor&gt;,&lt;product&gt;,&lt;version&gt;,&lt;name&gt;') with,
                             matching will be read, multiple can be provided
   -p, --plugin PATH         Path to plugin
   -g, --grab                Grab the input device, preventing others from

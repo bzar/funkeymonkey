@@ -16,19 +16,20 @@ make
 
 ### Usage
 <pre>
-  ./funkeymonkey [OPTION...]
+  ./funkeymonkey [OPTION...] - A evdev/uinput wrangler
 
-  -i, --device PATH         Input device to read from, eg. /dev/input/event0,
-                            multiple can be provided
-  -m, --match-devices PATH  Regular expression to match device strings
-                            (format: '&lt;vendor&gt;,&lt;product&gt;,&lt;version&gt;,&lt;name&gt;') with,
-                            matching will be read, multiple can be provided
-  -p, --plugin PATH         Path to plugin
-  -g, --grab                Grab the input device, preventing others from
-                            accessing it
-  -d, --daemonize           Daemonize process
-  -l, --list-devices        List available devices
-  -h, --help                Print help
+  -i, --device PATH            Input device to read from, eg.
+                               /dev/input/event0, multiple can be provided
+  -m, --match-devices PATTERN  Regular expression to match device strings
+                               (format: '&lt;vendor&gt;,&lt;product&gt;,&lt;version&gt;,&lt;name&gt;')
+                               with, matching will be read, multiple can be
+                               provided
+  -p, --plugin PATH            Path to plugin
+  -g, --grab                   Grab the input device, preventing others from
+                               accessing it
+  -d, --daemonize              Daemonize process
+  -l, --list-devices           List available devices
+  -h, --help                   Print help
 </pre>
 
 ### Basics

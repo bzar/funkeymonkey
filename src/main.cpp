@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     ("i,device", "Input device to read from, eg. /dev/input/event0, multiple can be provided",
      cxxopts::value<std::vector<std::string>>(), "PATH")
     ("m,match-devices", "Regular expression to match device strings (format: '<vendor>,<product>,<version>,<name>') with, matching will be read, multiple can be provided",
-     cxxopts::value<std::vector<std::string>>(), "PATH")
+     cxxopts::value<std::vector<std::string>>(), "PATTERN")
     ("p,plugin", "Path to plugin", cxxopts::value<std::string>(), "PATH")
     ("g,grab", "Grab the input device, preventing others from accessing it")
     ("d,daemonize", "Daemonize process")

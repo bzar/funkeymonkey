@@ -7,9 +7,10 @@ include_directories(include)
 list(APPEND CMAKE_CXX_FLAGS -std=c++11)
 
 add_executable(funkeymonkey src/main.cpp)
-target_link_libraries(funkeymonkey dl)
+target_link_libraries(funkeymonkey dl pthread)
 
 add_library(testmodule SHARED modules/testmodule.cpp)
 add_library(toymodule SHARED modules/toymodule.cpp)
 add_library(keyboard SHARED modules/keyboard.cpp)
 add_library(cavestorysnes SHARED modules/cavestorysnes.cpp)
+add_library(modalgamepad SHARED modules/modalgamepad.cpp)

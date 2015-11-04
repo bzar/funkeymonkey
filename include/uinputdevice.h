@@ -23,6 +23,9 @@ public:
   explicit UinputDevice(std::string const& path, unsigned int bus, std::string const& name, unsigned int vendor, unsigned int product, unsigned int version, std::vector<PossibleEvent> const& possibleEvents);
   ~UinputDevice();
   bool send(unsigned int type, unsigned int code, int value);
+  bool ready() const; 
+  operator bool() const; 
+  void destroy();
 private:
   int _fd;
 };
@@ -81,11 +84,7 @@ UinputDevice::UinputDevice(std::string const& path, unsigned int bus, std::strin
 }
 UinputDevice::~UinputDevice()
 {
-  if(_fd)
-  {
-    ioctl(_fd, UI_DEV_DESTROY);
-    close(_fd);
-  }
+  destroy();
 }
 bool UinputDevice::send(unsigned int type, unsigned int code, int value)
 {
@@ -100,4 +99,21 @@ bool UinputDevice::send(unsigned int type, unsigned int code, int value)
   return write(_fd, &event, sizeof(event)) == sizeof(event);
 }
 
+bool UinputDevice::ready() const
+{
+  return _fd != 0;
+}
+UinputDevice::operator bool() const
+{
+  return ready();
+}
+void UinputDevice::destroy()
+{
+  if(_fd)
+  {
+    ioctl(_fd, UI_DEV_DESTROY);
+    close(_fd);
+    _fd = 0;
+  }
+}
 #endif

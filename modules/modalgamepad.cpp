@@ -149,28 +149,28 @@ void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDe
   switch(mode)
   {
     case Settings::MOUSE_X:
-      global.mouse->dx = value;
-      if(global.mouse->dx > global.settings.mouseDeadzone 
-          || global.mouse->dx < -global.settings.mouseDeadzone)
-        global.mouse->signal.notify_all();
+      mouse->dx = value;
+      if(mouse->dx > global.settings.mouseDeadzone 
+          || mouse->dx < -global.settings.mouseDeadzone)
+        mouse->signal.notify_all();
       break;
     case Settings::MOUSE_Y:
-      global.mouse->dy = value;
-      if(global.mouse->dy > global.settings.mouseDeadzone 
-          || global.mouse->dy < -global.settings.mouseDeadzone)
-        global.mouse->signal.notify_all();
+      mouse->dy = value;
+      if(mouse->dy > global.settings.mouseDeadzone 
+          || mouse->dy < -global.settings.mouseDeadzone)
+        mouse->signal.notify_all();
       break;
     case Settings::SCROLL_X:
-      global.mouse->dwx = value;
-      if(global.mouse->dwx > global.settings.mouseDeadzone 
-          || global.mouse->dwx < -global.settings.mouseDeadzone)
-        global.mouse->signal.notify_all();
+      mouse->dwx = value;
+      if(mouse->dwx > global.settings.mouseDeadzone 
+          || mouse->dwx < -global.settings.mouseDeadzone)
+        mouse->signal.notify_all();
       break;
     case Settings::SCROLL_Y:
-      global.mouse->dwy = value;
-      if(global.mouse->dwy > global.settings.mouseDeadzone 
-          || global.mouse->dwy < -global.settings.mouseDeadzone)
-        global.mouse->signal.notify_all();
+      mouse->dwy = value;
+      if(mouse->dwy > global.settings.mouseDeadzone 
+          || mouse->dwy < -global.settings.mouseDeadzone)
+        mouse->signal.notify_all();
       break;
     case Settings::LEFT_JOYSTICK_X:
       gamepad->send(EV_ABS, ABS_X, value);
@@ -197,16 +197,16 @@ void handleNubClick(Settings::NubClickMode mode, int value, Mouse* mouse, Uinput
   {
     case Settings::MOUSE_LEFT:
       {
-        std::lock_guard<std::mutex> lk(global.mouse->mutex);
-        global.mouse->device.send(EV_KEY, BTN_LEFT, value);
-        global.mouse->device.send(EV_SYN, 0, 0);
+        std::lock_guard<std::mutex> lk(mouse->mutex);
+        mouse->device.send(EV_KEY, BTN_LEFT, value);
+        mouse->device.send(EV_SYN, 0, 0);
         break;
       }
     case Settings::MOUSE_RIGHT:
       {
-        std::lock_guard<std::mutex> lk(global.mouse->mutex);
-        global.mouse->device.send(EV_KEY, BTN_RIGHT, value);
-        global.mouse->device.send(EV_SYN, 0, 0);
+        std::lock_guard<std::mutex> lk(mouse->mutex);
+        mouse->device.send(EV_KEY, BTN_RIGHT, value);
+        mouse->device.send(EV_SYN, 0, 0);
         break;
       }
     case Settings::NUB_CLICK_LEFT:

@@ -50,11 +50,11 @@ struct Settings
   int mouseWheelDeadzone = 500;
 };
 
-void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDevice* gamepad);
-void handleNubClick(Settings::NubClickMode mode, int value, Mouse* mouse, UinputDevice* gamepad);
+void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDevice* gamepad, Settings const& settings);
+void handleNubClick(Settings::NubClickMode mode, int value, Mouse* mouse, UinputDevice* gamepad, Settings const& settings);
 
 // Mouse movement/scroll thread handler
-void handleMouse(Mouse* mouse, Settings* settings);
+void handleMouse(Mouse* mouse, Settings* settings, bool* stop);
 
 struct
 {
@@ -86,7 +86,7 @@ void init()
         }), 0, 0, 0, 0, {}, {}
   };
   global.mouseThread = std::move(std::thread(handleMouse,
-        global.mouse, &global.settings));
+        global.mouse, &global.settings, &global.stop));
 }
 
 void handle(input_event const& e)
@@ -98,19 +98,19 @@ void handle(input_event const& e)
       {
         case ABS_X:
           handleNubAxis(global.settings.leftNubModeX, e.value,
-              global.mouse, global.gamepad);
+              global.mouse, global.gamepad, global.settings);
           break;
         case ABS_Y:
           handleNubAxis(global.settings.leftNubModeY, e.value,
-              global.mouse, global.gamepad);
+              global.mouse, global.gamepad, global.settings);
           break;
         case ABS_RX:
           handleNubAxis(global.settings.rightNubModeX, e.value,
-              global.mouse, global.gamepad);
+              global.mouse, global.gamepad, global.settings);
           break;
         case ABS_RY:
           handleNubAxis(global.settings.rightNubModeY, e.value,
-              global.mouse, global.gamepad);
+              global.mouse, global.gamepad, global.settings);
           break;
         default: break;
       };
@@ -120,11 +120,11 @@ void handle(input_event const& e)
       {
         case BTN_THUMBL:
           handleNubClick(global.settings.leftNubClickMode, e.value,
-              global.mouse, global.gamepad);
+              global.mouse, global.gamepad, global.settings);
           break;
         case BTN_THUMBR:
           handleNubClick(global.settings.rightNubClickMode, e.value,
-              global.mouse, global.gamepad);
+              global.mouse, global.gamepad, global.settings);
           break;
         default: break;
       }
@@ -144,32 +144,32 @@ void destroy()
   global.mouseThread.join();
 }
 
-void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDevice* gamepad)
+void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDevice* gamepad, Settings const& settings)
 {
   switch(mode)
   {
     case Settings::MOUSE_X:
       mouse->dx = value;
-      if(mouse->dx > global.settings.mouseDeadzone 
-          || mouse->dx < -global.settings.mouseDeadzone)
+      if(mouse->dx > settings.mouseDeadzone 
+          || mouse->dx < -settings.mouseDeadzone)
         mouse->signal.notify_all();
       break;
     case Settings::MOUSE_Y:
       mouse->dy = value;
-      if(mouse->dy > global.settings.mouseDeadzone 
-          || mouse->dy < -global.settings.mouseDeadzone)
+      if(mouse->dy > settings.mouseDeadzone 
+          || mouse->dy < -settings.mouseDeadzone)
         mouse->signal.notify_all();
       break;
     case Settings::SCROLL_X:
       mouse->dwx = value;
-      if(mouse->dwx > global.settings.mouseDeadzone 
-          || mouse->dwx < -global.settings.mouseDeadzone)
+      if(mouse->dwx > settings.mouseDeadzone 
+          || mouse->dwx < -settings.mouseDeadzone)
         mouse->signal.notify_all();
       break;
     case Settings::SCROLL_Y:
       mouse->dwy = value;
-      if(mouse->dwy > global.settings.mouseDeadzone 
-          || mouse->dwy < -global.settings.mouseDeadzone)
+      if(mouse->dwy > settings.mouseDeadzone 
+          || mouse->dwy < -settings.mouseDeadzone)
         mouse->signal.notify_all();
       break;
     case Settings::LEFT_JOYSTICK_X:
@@ -191,7 +191,7 @@ void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDe
   }
 }
 
-void handleNubClick(Settings::NubClickMode mode, int value, Mouse* mouse, UinputDevice* gamepad)
+void handleNubClick(Settings::NubClickMode mode, int value, Mouse* mouse, UinputDevice* gamepad, Settings const& settings)
 {
   switch(mode)
   {
@@ -210,19 +210,19 @@ void handleNubClick(Settings::NubClickMode mode, int value, Mouse* mouse, Uinput
         break;
       }
     case Settings::NUB_CLICK_LEFT:
-      global.gamepad->send(EV_KEY, BTN_THUMBL, value);
-      global.gamepad->send(EV_SYN, 0, 0);
+      gamepad->send(EV_KEY, BTN_THUMBL, value);
+      gamepad->send(EV_SYN, 0, 0);
       break;
     case Settings::NUB_CLICK_RIGHT:
-      global.gamepad->send(EV_KEY, BTN_THUMBR, value);
-      global.gamepad->send(EV_SYN, 0, 0);
+      gamepad->send(EV_KEY, BTN_THUMBR, value);
+      gamepad->send(EV_SYN, 0, 0);
       break;
   }
 }
 
-void handleMouse(Mouse* mouse, Settings* settings)
+void handleMouse(Mouse* mouse, Settings* settings, bool* stop)
 {
-  while(!global.stop)
+  while(!*stop)
   {
     if(mouse->dx > settings->mouseDeadzone
         || mouse->dx < -settings->mouseDeadzone

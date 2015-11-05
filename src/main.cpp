@@ -6,6 +6,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <regex>
+#include <algorithm>
+#include <iterator>
 
 #include <memory.h>
 #include <signal.h>
@@ -17,14 +19,21 @@ void term(int)
   done = 1;
 }
 
-void process(EvdevDevice& evdev, FunKeyMonkeyModule& module)
+void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
+    std::vector<std::string> const& moduleArgs)
 {
   struct sigaction action;
   memset(&action, 0, sizeof(struct sigaction));
   action.sa_handler = term;
   sigaction(SIGINT, &action, NULL);
 
-  module.init();
+  std::vector<char const*> args;
+  std::transform(moduleArgs.begin(), moduleArgs.end(),
+      std::inserter(args, args.begin()), [](std::string const& s) {
+      return s.c_str();
+  });
+
+  module.init(args.data(), args.size());
 
   while(!done)
   {
@@ -64,6 +73,8 @@ int main(int argc, char** argv)
     ("g,grab", "Grab the input device, preventing others from accessing it")
     ("d,daemonize", "Daemonize process")
     ("l,list-devices", "List available devices")
+    ("X,plugin-parameter", "Plugin parameter",
+     cxxopts::value<std::vector<std::string>>(), "ARG")
     ("h,help", "Print help");
 
   if(argc == 1)
@@ -95,7 +106,7 @@ int main(int argc, char** argv)
     {
       std::cout << std::hex
         << device.path << ": "
-        << device.vendor << "," 
+        << device.vendor << ","
         << device.product << ","
         << device.version << ","
         << device.name << std::endl;
@@ -126,7 +137,7 @@ int main(int argc, char** argv)
       for(EvdevDevice::Information const& info : devices)
       {
         std::ostringstream deviceString;
-        deviceString << std::hex 
+        deviceString << std::hex
           << info.vendor << ","
           << info.product << ","
           << info.version << ","
@@ -167,7 +178,9 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  process(evdev, module);
+  std::vector<std::string> moduleArgs = options["X"].as<std::vector<std::string>>();
+
+  process(evdev, module, moduleArgs);
 
   return EXIT_SUCCESS;
 }

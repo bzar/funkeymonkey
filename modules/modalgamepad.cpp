@@ -66,7 +66,7 @@ struct
 } global;
 
 
-void init()
+void init(char const** argv, unsigned int argc)
 {
   global.gamepad = new UinputDevice("/dev/uinput", BUS_USB,
       "Modal Gamepad", 1, 1, 1, {

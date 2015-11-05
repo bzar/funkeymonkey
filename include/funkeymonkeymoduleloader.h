@@ -12,12 +12,12 @@ public:
   FunKeyMonkeyModule(std::string const& path);
   ~FunKeyMonkeyModule();
   bool ready() const;
-  void init();
+  void init(char const** argv, unsigned int argc);
   void handle(input_event const& e);
   void destroy();
 private:
   void *_lib;
-  void (*_init)();
+  void (*_init)(char const**, unsigned int);
   void (*_handle)(input_event const&);
   void (*_destroy)();
 };
@@ -49,7 +49,7 @@ FunKeyMonkeyModule::FunKeyMonkeyModule(std::string const& path) :
     };
     _init = reinterpret_cast<decltype(_init)>(load("init"));
     _handle = reinterpret_cast<decltype(_handle)>(load("handle"));
-    _destroy =reinterpret_cast<decltype(_destroy)>(load("destroy"));
+    _destroy = reinterpret_cast<decltype(_destroy)>(load("destroy"));
   }
 }
 FunKeyMonkeyModule::~FunKeyMonkeyModule()
@@ -61,10 +61,10 @@ bool FunKeyMonkeyModule::ready() const
 {
   return _lib != 0;
 }
-void FunKeyMonkeyModule::init()
+void FunKeyMonkeyModule::init(char const** argv, unsigned int argc)
 {
   if(_init)
-    (*_init)();
+    (*_init)(argv, argc);
 }
 void FunKeyMonkeyModule::handle(input_event const& e)
 {

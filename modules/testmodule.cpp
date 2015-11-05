@@ -1,9 +1,13 @@
 #include "funkeymonkeymodule.h"
 #include <iostream>
 
-void init()
+void init(char const** argv, unsigned int argc)
 {
   std::cout << "Init!" << std::endl;
+  for(unsigned int i = 0; i < argc; ++i)
+  {
+    std::cout << "Plugin parameter " << i + 1 << ": " << argv[i] << std::endl;
+  }
 }
 void handle(input_event const& e)
 {

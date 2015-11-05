@@ -24,7 +24,7 @@ good luck!
 bool menu; // whether we're in the menu or not.
 
 UinputDevice* out;
-void init()
+void init(char const** argv, unsigned int argc)
 {
   std::cout << "Init!";
   menu = 0; // do not start on menu

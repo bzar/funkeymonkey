@@ -38,7 +38,7 @@ private:
 KeyBehaviors<FIRST_KEY, LAST_KEY>* behaviors;
 UinputDevice* out;
 
-void init()
+void init(char const** argv, unsigned int argc)
 {
   std::vector<unsigned int> keycodes;
   for(unsigned int i = FIRST_KEY; i <= LAST_KEY; ++i)

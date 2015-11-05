@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void init();
+void init(char const** argv, unsigned int argc);
 void handle(input_event const& e);
 void destroy();
 

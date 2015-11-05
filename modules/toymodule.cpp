@@ -3,7 +3,7 @@
 #include <iostream>
 
 UinputDevice* out;
-void init()
+void init(char const** argv, unsigned int argc)
 {
   std::cout << "Init!" << std::endl;
   out = new UinputDevice("/dev/uinput", BUS_USB, "FunKeyMonkey Toy", 1, 1, 1, {

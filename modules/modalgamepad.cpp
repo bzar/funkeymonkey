@@ -5,6 +5,10 @@
 #include <chrono>
 #include <mutex>
 #include <condition_variable>
+#include <regex>
+#include <fstream>
+#include <algorithm>
+#include <cctype>
 
 struct Mouse
 {
@@ -50,6 +54,8 @@ struct Settings
   int mouseWheelDeadzone = 500;
 };
 
+void handleArgs(char const** argv, unsigned int argc, Settings& settings);
+void loadConfig(std::string const& filename, Settings& settings);
 void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDevice* gamepad, Settings const& settings);
 void handleNubClick(Settings::NubClickMode mode, int value, Mouse* mouse, UinputDevice* gamepad, Settings const& settings);
 
@@ -87,6 +93,8 @@ void init(char const** argv, unsigned int argc)
   };
   global.mouseThread = std::move(std::thread(handleMouse,
         global.mouse, &global.settings, &global.stop));
+
+  handleArgs(argv, argc, global.settings);
 }
 
 void handle(input_event const& e)
@@ -142,6 +150,71 @@ void destroy()
   }
 
   global.mouseThread.join();
+}
+
+void handleArgs(char const** argv, unsigned int argc, Settings& settings)
+{
+  std::string configFile;
+  std::regex configRegex("config=(.*)");
+
+  for(unsigned int i = 0; i < argc; ++i)
+  {
+    std::string arg(argv[i]);
+    std::smatch match;
+    if(std::regex_match(arg, match, configRegex))
+    {
+      configFile = match[1];
+    }
+  }
+
+  if(!configFile.empty())
+  {
+    loadConfig(configFile, settings);
+  }
+}
+
+void loadConfig(std::string const& filename, Settings& settings)
+{
+  std::regex re("^(\\w+)\\s*=\\s*(\\w*)$");
+  std::regex emptyRe("^\\s*$");
+  std::ifstream configFile(filename);
+
+  if(!configFile)
+  {
+    std::cerr << "ERROR: Could not open config file " << filename << std::endl;
+    return;
+  }
+  std::string line;
+  while(std::getline(configFile, line))
+  {
+    if(line.empty() || line.at(0) == '#' || std::regex_match(line, emptyRe))
+      continue;
+
+    std::smatch match;
+    if(std::regex_match(line, match, re))
+    {
+      std::string key = match[1];
+      std::string value = match[2];
+      std::transform(key.begin(), key.end(), key.begin(), tolower);
+
+      if(key == "mousesensitivity")
+      {
+        settings.mouseSensitivity = std::stoi(value);
+      }
+      else if(key == "mousedeadzone")
+      {
+        settings.mouseDeadzone = std::stoi(value);
+      }
+      else if(key == "mousewheeldeadzone")
+      {
+        settings.mouseWheelDeadzone = std::stoi(value);
+      }
+    }
+    else
+    {
+      std::cerr << "Invalid line in config file: " << line << std::endl;
+    }
+  }
 }
 
 void handleNubAxis(Settings::NubAxisMode mode, int value, Mouse* mouse, UinputDevice* gamepad, Settings const& settings)

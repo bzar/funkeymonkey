@@ -49,7 +49,7 @@ public:
   EvdevDevice(EvdevDevice const&) = delete;
   ~EvdevDevice();
   bool addDevice(std::string const& path);
-  PollResult poll();
+  PollResult poll(bool blocking = true);
   bool ready() const;
   bool grab(bool value);
 
@@ -165,7 +165,7 @@ bool EvdevDevice::addDevice(std::string const& path)
 
   return true;
 }
-EvdevDevice::PollResult EvdevDevice::poll()
+EvdevDevice::PollResult EvdevDevice::poll(bool blocking)
 {
   if(_fds.empty())
     return {POLL_ERROR, {0}};
@@ -181,7 +181,8 @@ EvdevDevice::PollResult EvdevDevice::poll()
       FD_SET(fd, &fds);
     }
 
-    int readyFds = select(FD_SETSIZE, &fds, NULL, NULL, &timeout);
+    int readyFds = select(FD_SETSIZE, &fds, NULL, NULL, 
+        blocking ? NULL : &timeout);
 
     if(readyFds == 0)
     {

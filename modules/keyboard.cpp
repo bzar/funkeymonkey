@@ -78,6 +78,12 @@ void destroy()
     delete behaviors;
   }
 }
+void user1()
+{
+}
+void user2()
+{
+}
 
 
 template<int FIRST_KEY, int LAST_KEY>

@@ -29,3 +29,9 @@ void destroy()
   }
 }
 
+void user1()
+{
+}
+void user2()
+{
+}

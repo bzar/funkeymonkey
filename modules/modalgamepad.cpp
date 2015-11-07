@@ -185,6 +185,14 @@ void destroy()
   global.mouseThread.join();
 }
 
+void user1()
+{
+  loadConfig(global.settings.configFile, global.settings);
+}
+void user2()
+{
+}
+
 void handleArgs(char const** argv, unsigned int argc, Settings& settings)
 {
   std::string configFile;

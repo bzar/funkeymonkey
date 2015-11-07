@@ -11,6 +11,9 @@ void init(char const** argv, unsigned int argc);
 void handle(input_event const& e);
 void destroy();
 
+void user1();
+void user2();
+
 #ifdef __cplusplus
 }
 #endif

@@ -18,3 +18,11 @@ void destroy()
   std::cout << "Destroy!" << std::endl;
 }
 
+void user1()
+{
+  std::cout << "User1!" << std::endl;
+}
+void user2()
+{
+  std::cout << "User2!" << std::endl;
+}

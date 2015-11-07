@@ -15,11 +15,15 @@ public:
   void init(char const** argv, unsigned int argc);
   void handle(input_event const& e);
   void destroy();
+  void user1();
+  void user2();
 private:
   void *_lib;
   void (*_init)(char const**, unsigned int);
   void (*_handle)(input_event const&);
   void (*_destroy)();
+  void (*_user1)();
+  void (*_user2)();
 };
 
 FunKeyMonkeyModule::FunKeyMonkeyModule(std::string const& path) :
@@ -50,6 +54,8 @@ FunKeyMonkeyModule::FunKeyMonkeyModule(std::string const& path) :
     _init = reinterpret_cast<decltype(_init)>(load("init"));
     _handle = reinterpret_cast<decltype(_handle)>(load("handle"));
     _destroy = reinterpret_cast<decltype(_destroy)>(load("destroy"));
+    _user1 = reinterpret_cast<decltype(_user1)>(load("user1"));
+    _user2 = reinterpret_cast<decltype(_user2)>(load("user2"));
   }
 }
 FunKeyMonkeyModule::~FunKeyMonkeyModule()
@@ -76,6 +82,18 @@ void FunKeyMonkeyModule::destroy()
 {
   if(_destroy)
     (*_destroy)();
+}
+
+void FunKeyMonkeyModule::user1()
+{
+  if(_user1)
+    (*_user1)();
+}
+
+void FunKeyMonkeyModule::user2()
+{
+  if(_user2)
+    (*_user2)();
 }
 
 #endif

@@ -13,19 +13,40 @@
 #include <signal.h>
 
 volatile sig_atomic_t done = 0;
+volatile sig_atomic_t usr1 = 0;
+volatile sig_atomic_t usr2 = 0;
 
-void term(int)
+void sighandle(int sig)
 {
-  done = 1;
+  switch(sig)
+  {
+    case SIGINT:
+      done = 1;
+      break;
+    case SIGUSR1:
+      usr1 = 1;
+      break;
+    case SIGUSR2:
+      usr2 = 1;
+      break;
+    default: break;
+  }
 }
 
 void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
     std::vector<std::string> const& moduleArgs)
 {
-  struct sigaction action;
-  memset(&action, 0, sizeof(struct sigaction));
-  action.sa_handler = term;
-  sigaction(SIGINT, &action, NULL);
+  struct sigaction sigAction;
+  sigAction.sa_handler = sighandle;
+  sigAction.sa_flags = 0;
+  sigemptyset(&sigAction.sa_mask);
+
+  if(sigaction(SIGINT, &sigAction, NULL) == -1
+      || sigaction(SIGUSR1, &sigAction, NULL) == -1
+      || sigaction(SIGUSR2, &sigAction, NULL) == -1)
+  {
+    std::cerr << "ERROR: Could not register signal handlers" << std::endl;
+  }
 
   std::vector<char const*> args;
   std::transform(moduleArgs.begin(), moduleArgs.end(),
@@ -37,6 +58,18 @@ void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
 
   while(!done)
   {
+    if(usr1)
+    {
+      module.user1();
+      usr1 = 0;
+    }
+
+    if(usr2)
+    {
+      module.user2();
+      usr2 = 0;
+    }
+
     auto result = evdev.poll();
     switch(result.status)
     {
@@ -51,8 +84,11 @@ void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
       }
       case EvdevDevice::POLL_ERROR:
       {
-        std::cerr << "ERROR: Reading devices failed." << std::endl;
-        done = 1;
+        if(!done && !usr1 && !usr2)
+        {
+          std::cerr << "ERROR: Reading devices failed." << std::endl;
+          done = 1;
+        }
         break;
       }
     }

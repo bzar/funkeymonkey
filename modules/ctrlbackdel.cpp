@@ -31,7 +31,20 @@ void handle(input_event const& e)
   }
   else if (e.code == KEY_BACKSPACE and left_ctrl_depressed)
   {
-    out->send(EV_KEY, KEY_DELETE, e.value);
+    // enforce LEFTCTRL is off when delete is pressed, otherwise strange things can happen 
+    // (e.g. Ctrl+Delete means something different in the browser)
+    if (e.value)
+    {
+      out->send(EV_KEY, KEY_LEFTCTRL, 0);
+      out->send(EV_SYN, 0, 0);
+      out->send(EV_KEY, KEY_DELETE, 1);
+    }
+    else
+    {
+      out->send(EV_KEY, KEY_DELETE, 0);
+      out->send(EV_SYN, 0, 0);
+      out->send(EV_KEY, KEY_LEFTCTRL, 1);
+    }
     return;
   }
   // pass through everything else, including ctrl

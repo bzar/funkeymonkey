@@ -24,3 +24,5 @@ add_library(ctrlbackdel SHARED modules/ctrlbackdel.cpp)
 install(TARGETS ctrlbackdel DESTINATION lib/funkeymonkey)
 
 install(FILES "include/funkeymonkeymodule.h" DESTINATION include/funkeymonkey)
+install(FILES "include/uinputdevice.h" DESTINATION include/funkeymonkey)
+install(FILES "include/evdevdevice.h" DESTINATION include/funkeymonkey)

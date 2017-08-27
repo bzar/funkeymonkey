@@ -106,7 +106,7 @@ void KeyBehaviors<FIRST_KEY, LAST_KEY>::altmap(unsigned int code, bool* flag,
     unsigned int alternative)
 {
   auto& b = behaviors.at(code - FIRST_KEY);
-  b.type = KeyBehavior::MAPPED;
+  b.type = KeyBehavior::ALTMAPPED;
   b.mapping = regular;
   b.alternative = alternative;
   b.flag = flag;

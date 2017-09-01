@@ -13,14 +13,14 @@ public:
   ~FunKeyMonkeyModule();
   bool ready() const;
   void init(char const** argv, unsigned int argc);
-  void handle(input_event const& e);
+  void handle(input_event const& e, int src);
   void destroy();
   void user1();
   void user2();
 private:
   void *_lib;
   void (*_init)(char const**, unsigned int);
-  void (*_handle)(input_event const&);
+  void (*_handle)(input_event const&, int src);
   void (*_destroy)();
   void (*_user1)();
   void (*_user2)();
@@ -72,10 +72,10 @@ void FunKeyMonkeyModule::init(char const** argv, unsigned int argc)
   if(_init)
     (*_init)(argv, argc);
 }
-void FunKeyMonkeyModule::handle(input_event const& e)
+void FunKeyMonkeyModule::handle(input_event const& e, int src)
 {
   if(_handle)
-    (*_handle)(e);
+    (*_handle)(e, src);
 
 }
 void FunKeyMonkeyModule::destroy()

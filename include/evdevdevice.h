@@ -49,17 +49,24 @@ public:
   EvdevDevice(EvdevDevice const&) = delete;
   ~EvdevDevice();
   bool addDevice(std::string const& path);
+  std::string getName(int src);
   PollResult poll(bool blocking = true);
   bool ready() const;
   bool grab(bool value);
+  int getLastfd();
 
 private:
   std::vector<int> _fds;
   std::array<input_event, 64> _events;
+  std::map<int,std::string> _names;
   int _numEvents;
   int _currentEvent;
   int _previousDevice;
 };
+
+int EvdevDevice::getLastfd() {
+  return _previousDevice;
+}
 
 std::vector<EvdevDevice::Information> EvdevDevice::availableDevices()
 {
@@ -156,7 +163,13 @@ bool EvdevDevice::addDevice(std::string const& path)
 
     _fds.push_back(fd);
     std::cout << "Successfully added device '" << path << "'." << std::endl;
-  }
+    std::vector<EvdevDevice::Information> devices = EvdevDevice::availableDevices();
+    for(EvdevDevice::Information const& device : devices)
+    {
+      if (device.path == path)
+        _names[fd] = device.name;
+    }
+}
   else
   {
     std::cerr << "ERROR: Cannot access '" << path << "'. Does it exist?" << std::endl;
@@ -164,6 +177,10 @@ bool EvdevDevice::addDevice(std::string const& path)
   }
 
   return true;
+}
+std::string EvdevDevice::getName(int src)
+{
+  return _names[src];
 }
 EvdevDevice::PollResult EvdevDevice::poll(bool blocking)
 {

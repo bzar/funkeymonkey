@@ -7,8 +7,10 @@
 extern "C" {
 #endif
 
+void getName(int src, char *name);
+
 void init(char const** argv, unsigned int argc);
-void handle(input_event const& e);
+void handle(input_event const& e, int src);
 void destroy();
 
 void user1();

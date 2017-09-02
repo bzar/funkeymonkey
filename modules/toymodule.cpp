@@ -10,7 +10,7 @@ void init(char const** argv, unsigned int argc)
     { EV_KEY, { KEY_K } }
   });
 }
-void handle(input_event const& e)
+void handle(input_event const& e, int)
 {
   std::cout << "Event! " << e.type << " " << e.code << " " << e.value << " " << std::endl;
   if(out && e.type == EV_KEY && e.value == 0)

@@ -1,5 +1,20 @@
 #include "funkeymonkeymodule.h"
 #include <iostream>
+#include <dlfcn.h>
+
+void (*_getName)(int src, char *name);
+
+    void* load(std::string const& name) {
+      void* value = dlsym(nullptr, name.data());
+      auto error = dlerror();
+      if(error)
+      {
+        std::cerr << "ERROR: While loading " << name << ": " << error << std::endl;
+        value = nullptr;
+      }
+      return value;
+    };
+
 
 void init(char const** argv, unsigned int argc)
 {
@@ -8,10 +23,13 @@ void init(char const** argv, unsigned int argc)
   {
     std::cout << "Plugin parameter " << i + 1 << ": " << argv[i] << std::endl;
   }
+  _getName = reinterpret_cast<decltype(_getName)>(load("getName"));
 }
-void handle(input_event const& e)
+void handle(input_event const& e, int src)
 {
-  std::cout << "Event! " << e.type << " " << e.code << " " << e.value << " " << std::endl;
+	char tmp[256];
+	_getName(src, tmp);
+  std::cout << "Event! " << tmp << " " << e.type << " " << e.code << " " << e.value << " " << std::endl;
 }
 void destroy()
 {

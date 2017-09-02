@@ -16,6 +16,8 @@ volatile sig_atomic_t done = 0;
 volatile sig_atomic_t usr1 = 0;
 volatile sig_atomic_t usr2 = 0;
 
+EvdevDevice *p_evdev;
+
 void sighandle(int sig)
 {
   switch(sig)
@@ -75,7 +77,7 @@ void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
     {
       case EvdevDevice::POLL_OK:
       {
-        module.handle(result.event);
+        module.handle(result.event, evdev.getLastfd());
         break;
       }
       case EvdevDevice::POLL_TIMEOUT:
@@ -95,6 +97,10 @@ void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
   }
 
   module.destroy();
+}
+
+void getName(int src, char *name) {
+	strcpy(name, p_evdev->getName(src).data());
 }
 
 int main(int argc, char** argv)
@@ -187,6 +193,7 @@ int main(int argc, char** argv)
   }
 
   EvdevDevice evdev(devicePaths);
+  p_evdev  = &evdev;
 
   if(!evdev.ready())
   {

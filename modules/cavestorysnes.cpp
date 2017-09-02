@@ -32,7 +32,7 @@ void init(char const** argv, unsigned int argc)
     { EV_KEY, { KEY_Q, KEY_W, KEY_A, KEY_S, KEY_Z, KEY_X, KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT, KEY_ESC, KEY_F1, KEY_F2 } }
   });
 }
-void handle(input_event const& e)
+void handle(input_event const& e, int)
 {
   std::cout << "\nEvent! " << e.type << " " << e.code << " " << e.value << " " << std::endl;
   if (e.type != 3) // not an x/y axis

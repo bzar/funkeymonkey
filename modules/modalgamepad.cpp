@@ -130,7 +130,7 @@ void init(char const** argv, unsigned int argc)
   }
 }
 
-void handle(input_event const& e)
+void handle(input_event const& e, int)
 {
   switch(e.type)
   {

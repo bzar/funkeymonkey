@@ -1,6 +1,6 @@
 Source: funkeymonkey
-Section: unknown
-Priority: extra
+Section: misc
+Priority: optional
 Maintainer: Sébastien Huss <sebastien.huss@gmail.com>
 Build-Depends: cmake, debhelper (>=9)
 Standards-Version: 3.9.8
@@ -11,17 +11,24 @@ Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Recommends: funkeymonkey-test
-Description: An efficient evdev/uinput wrangler with a plugin architecture.
- FunKeyMonkey reads one or more evdev devices (basically any input device on a typical Linux setup) and relays their events to a plugin. Plugins are compiled separately and are provided to FunKeyMonkey on execution.
- A plugin often creates one or more virtual input devices using uinput. The plugin then typically reacts to the real input events and generates virtual ones based them.
- When running FunKeyMonkey, you may decide to "grab" the input device(s) to prevent any other program from reading them. This way, only the virtual input is visible.
+Description: Provides an efficient evdev/uinput wrangler with a plugin architecture.
+ Reads one or more evdev devices (basically any input device on a typical Linux 
+ setup) and relays their events to a plugin. 
+ Plugins are compiled separately and are provided to FunKeyMonkey on execution.
+ A plugin often creates one or more virtual input devices using uinput. 
+ The plugin then typically reacts to the real input events and generates 
+ virtual ones based them.
+ When running FunKeyMonkey, you may decide to "grab" the input device(s) to 
+ prevent any other program from reading them.
+ This way, only the virtual input is visible.
+
 
 Package: funkeymonkey-dev
 Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}
 Description: funkeymonkey modules header
- Developpement files for funkeymonkey modules 
+ Development files for funkeymonkey modules 
 
 Package: funkeymonkey-test
 Architecture: any
@@ -35,7 +42,7 @@ Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}, funkeymonkey
 Description: funkeymonkey toy plugin
- This funkeymonkey plugin allow you to test the devices 
+ This funkeymonkey toy plugin allow you to test the devices 
 
 Package: funkeymonkey-cavestorysnes
 Architecture: any
@@ -67,6 +74,7 @@ Description: funkeymonkey modalgamepad plugin
 
 Package: funkeymonkey-plugins
 Architecture: all
-Depends: ${misc:Depends}, funkeymonkey-modalgamepad, funkeymonkey-keyboard, funkeymonkey-ctrlbackdel, funkeymonkey-cavestorysnes, funkeymonkey-toy, funkeymonkey-test
+Depends: ${misc:Depends}, funkeymonkey-modalgamepad, funkeymonkey-keyboard, 
+ funkeymonkey-ctrlbackdel, funkeymonkey-cavestorysnes, funkeymonkey-toy, funkeymonkey-test
 Description: All funkeyMonkey plugins
- All funkeyMonkey plugins
+ metapackage for all funkeyMonkey plugins

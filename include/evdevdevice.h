@@ -213,10 +213,11 @@ EvdevDevice::PollResult EvdevDevice::poll(bool blocking)
     {
       for(int i = 0; i < _devices.size(); ++i)
       {
-        int fd = _devices.at((i + _previousDevice + 1) % _devices.size()).fd;
+        unsigned int di = (i + _previousDevice + 1) % _devices.size();
+        int fd = _devices.at(di).fd;
         if(FD_ISSET(fd, &fds))
         {
-          ready = i;
+          ready = di;
           break;
         }
       }

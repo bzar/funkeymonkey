@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 void init(char const** argv, unsigned int argc);
-void handle(input_event const& e, int role);
+void handle(input_event const& e, unsigned int role);
 void destroy();
 
 void user1();

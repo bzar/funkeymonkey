@@ -59,7 +59,7 @@ void init(char const** argv, unsigned int argc)
     out->send(EV_KEY, KEY_O, value);
   });
 }
-void handle(input_event const& e, int)
+void handle(input_event const& e, unsigned int)
 {
   if(e.type != EV_KEY)
     return;

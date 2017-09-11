@@ -14,7 +14,7 @@ void init(char const** argv, unsigned int argc)
   });
 }
 
-void handle(input_event const& e, int)
+void handle(input_event const& e, unsigned int)
 {
   // all events will get handled, but we should technically only respond to the ones we made keys for!
   //std::cout << "\nEvent! " << e.type << " " << e.code << " " << e.value << "\n";

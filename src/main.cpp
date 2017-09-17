@@ -77,7 +77,7 @@ void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
     {
       case EvdevDevice::POLL_OK:
       {
-        module.handle(result.event, evdev.getLastfd());
+        module.handle(result.event, result.role);
         break;
       }
       case EvdevDevice::POLL_TIMEOUT:
@@ -99,10 +99,6 @@ void process(EvdevDevice& evdev, FunKeyMonkeyModule& module,
   module.destroy();
 }
 
-void getName(int src, char *name) {
-	strcpy(name, p_evdev->getName(src).data());
-}
-
 int main(int argc, char** argv)
 {
   cxxopts::Options options(argv[0], " - A evdev/uinput wrangler");
@@ -111,8 +107,10 @@ int main(int argc, char** argv)
      cxxopts::value<std::vector<std::string>>(), "PATH")
     ("m,match-devices", "Regular expression to match device strings (format: '<vendor>,<product>,<version>,<name>') with, matching will be read, multiple can be provided",
      cxxopts::value<std::vector<std::string>>(), "PATTERN")
+    ("r,roles", "A comma-separated list of role numbers. Roles will be assigned to devices in order of definition, path-based first. Devices matching a match-devices get one role.", cxxopts::value<std::string>(), "ROLES")
     ("p,plugin", "Path to plugin", cxxopts::value<std::string>(), "PATH")
     ("g,grab", "Grab the input device, preventing others from accessing it")
+    ("v,verbose", "Print extra runtime information")
     ("d,daemonize", "Daemonize process")
     ("l,list-devices", "List available devices")
     ("X,plugin-parameter", "Plugin parameter",
@@ -134,6 +132,8 @@ int main(int argc, char** argv)
     std::cerr << "ERROR: parsing options failed: " << e.what() << std::endl;
     return EXIT_FAILURE;
   }
+
+  bool const verbose = options.count("v") > 0;
 
   if(options.count("h"))
   {
@@ -168,14 +168,48 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  std::vector<std::string> devicePaths = options["i"].as<std::vector<std::string>>();
+  std::vector<unsigned int> deviceRoles;
+  if(options.count("r"))
+  {
+    std::string const roles = options["r"].as<std::string>();
+    std::istringstream iss(roles);
+    while(iss)
+    {
+      unsigned int role = 0;
+      iss >> role;
+
+      if(!iss)
+      {
+        std::cerr << "ERROR: Invalid role list: " << roles << std::endl;
+        return EXIT_FAILURE;
+      }
+
+      deviceRoles.push_back(role);
+
+      char separator = iss.get();
+      if(iss && separator != ',')
+      {
+        std::cerr << "ERROR: Invalid role list: " << roles << std::endl;
+        return EXIT_FAILURE;
+      }
+    }
+  }
+
+  std::vector<EvdevDevice::Input> inputs;
+  for(std::string const& path : options["i"].as<std::vector<std::string>>())
+  {
+    unsigned int role = deviceRoles.size() > inputs.size() ? deviceRoles.at(inputs.size()) : 0;
+    inputs.push_back({path, role});
+  }
 
   if(options.count("m") > 0)
   {
+    unsigned int roleIndex = inputs.size();
     std::vector<EvdevDevice::Information> devices = EvdevDevice::availableDevices();
     for(std::string const& pattern : options["m"].as<std::vector<std::string>>())
     {
       std::regex re(pattern);
+      unsigned int role = deviceRoles.size() > roleIndex ? deviceRoles.at(roleIndex) : 0;
       for(EvdevDevice::Information const& info : devices)
       {
         std::ostringstream deviceString;
@@ -186,13 +220,22 @@ int main(int argc, char** argv)
           << info.name;
         if(std::regex_search(deviceString.str(), re))
         {
-          devicePaths.push_back(info.path);
+          inputs.push_back({info.path, role});
         }
       }
+      roleIndex += 1;
     }
   }
 
-  EvdevDevice evdev(devicePaths);
+  if(verbose)
+  {
+    for(auto const& input : inputs)
+    {
+      std::cout << "Using device " << input.path << " with role " << input.role << std::endl;
+    }
+  }
+
+  EvdevDevice evdev(inputs);
   p_evdev  = &evdev;
 
   if(!evdev.ready())

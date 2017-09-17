@@ -25,6 +25,13 @@ class EvdevDevice
 {
 public:
 
+  struct Input
+  {
+    Input(std::string const& path, unsigned int role = 0) : path(path), role(role) {}
+    std::string path;
+    unsigned int role;
+  };
+
   struct Information
   {
     unsigned int bus;
@@ -40,39 +47,38 @@ public:
   {
     PollStatus status;
     input_event event;
+    unsigned int role;
   };
 
   static std::vector<Information> availableDevices();
 
-  explicit EvdevDevice(std::vector<std::string> const& paths);
-  explicit EvdevDevice(std::initializer_list<std::string> const& paths);
+  explicit EvdevDevice(std::vector<Input> const& inputs);
+  explicit EvdevDevice(std::initializer_list<Input> const& inputs);
   EvdevDevice(EvdevDevice const&) = delete;
   ~EvdevDevice();
-  bool addDevice(std::string const& path);
-  std::string getName(int src);
+  bool addDevice(Input const& path);
   PollResult poll(bool blocking = true);
   bool ready() const;
   bool grab(bool value);
-  int getLastfd();
 
 private:
-  std::vector<int> _fds;
+  struct Device
+  {
+    int fd;
+    unsigned int role;
+  };
+  std::vector<Device> _devices;
   std::array<input_event, 64> _events;
-  std::map<int,std::string> _names;
   int _numEvents;
   int _currentEvent;
+  unsigned int _currentRole;
   int _previousDevice;
 };
-
-int EvdevDevice::getLastfd() {
-  return _previousDevice;
-}
 
 std::vector<EvdevDevice::Information> EvdevDevice::availableDevices()
 {
   std::ifstream devicesFile(DEVICES_INFORMATION_FILE);
   std::vector<Information> devices;
-
 
   while(devicesFile)
   {
@@ -127,65 +133,56 @@ std::vector<EvdevDevice::Information> EvdevDevice::availableDevices()
   return std::move(devices);
 }
 
-EvdevDevice::EvdevDevice(std::initializer_list<std::string> const& paths) :
-  _fds(), _events(), _numEvents(0), _currentEvent(0), _previousDevice(0)
+EvdevDevice::EvdevDevice(std::initializer_list<Input> const& inputs) :
+  _devices(), _events(), _numEvents(0), _currentEvent(0), _currentRole(0), _previousDevice(0)
 {
-  for(std::string const& path : paths)
+  for(Input const& input : inputs)
   {
-    addDevice(path);
+    addDevice(input);
   }
 }
-EvdevDevice::EvdevDevice(std::vector<std::string> const& paths) :
-  _fds(), _events(), _numEvents(0), _currentEvent(0), _previousDevice(0)
+EvdevDevice::EvdevDevice(std::vector<Input> const& inputs) :
+  _devices(), _events(), _numEvents(0), _currentEvent(0), _currentRole(0), _previousDevice(0)
 {
-  for(std::string const& path : paths)
+  for(Input const& input : inputs)
   {
-    addDevice(path);
+    addDevice(input);
   }
 }
 EvdevDevice::~EvdevDevice()
 { 
-  for(int fd : _fds)
+  for(Device const& device : _devices)
   {
-    close(fd);
+    close(device.fd);
   }
 }
-bool EvdevDevice::addDevice(std::string const& path)
+bool EvdevDevice::addDevice(Input const& input)
 {
-  if(access(path.data(), F_OK ) != -1)
+  if(access(input.path.data(), F_OK ) != -1)
   {
-    int fd = open(path.data(), O_RDONLY | O_NDELAY);
+    int fd = open(input.path.data(), O_RDONLY | O_NDELAY);
     if(!fd)
     {
-      std::cerr << "ERROR: Cannot open '" << path << "'." << std::endl;
+      std::cerr << "ERROR: Cannot open '" << input.path << "'." << std::endl;
       return false;
     }
 
-    _fds.push_back(fd);
-    std::cout << "Successfully added device '" << path << "'." << std::endl;
-    std::vector<EvdevDevice::Information> devices = EvdevDevice::availableDevices();
-    for(EvdevDevice::Information const& device : devices)
-    {
-      if (device.path == path)
-        _names[fd] = device.name;
-    }
-}
+    _devices.push_back({fd, input.role});
+    std::cout << "Successfully added device '" << input.path << "'." << std::endl;
+  }
+
   else
   {
-    std::cerr << "ERROR: Cannot access '" << path << "'. Does it exist?" << std::endl;
+    std::cerr << "ERROR: Cannot access '" << input.path << "'. Does it exist?" << std::endl;
     return false;
   }
 
   return true;
 }
-std::string EvdevDevice::getName(int src)
-{
-  return _names[src];
-}
 EvdevDevice::PollResult EvdevDevice::poll(bool blocking)
 {
-  if(_fds.empty())
-    return {POLL_ERROR, {0}};
+  if(_devices.empty())
+    return {POLL_ERROR, {0}, 0};
 
   if(_currentEvent >= _numEvents)
   {
@@ -193,9 +190,9 @@ EvdevDevice::PollResult EvdevDevice::poll(bool blocking)
     fd_set fds;
     timeval timeout = {1, 0};
     FD_ZERO(&fds);
-    for(int fd : _fds)
+    for(auto const& device : _devices)
     {
-      FD_SET(fd, &fds);
+      FD_SET(device.fd, &fds);
     }
 
     int readyFds = select(FD_SETSIZE, &fds, NULL, NULL, 
@@ -203,65 +200,69 @@ EvdevDevice::PollResult EvdevDevice::poll(bool blocking)
 
     if(readyFds == 0)
     {
-      return {POLL_TIMEOUT, {0}};
+      return {POLL_TIMEOUT, {0}, 0};
     }
     else if(readyFds < 0)
     {
-      return {POLL_ERROR, {0}};
+      return {POLL_ERROR, {0}, 0};
     }
 
     // Round-robin next device to read from
-    int readyFd = _fds.front();
-    if(_fds.size() > 1)
+    unsigned int ready = 0;
+    if(_devices.size() > 1)
     {
-      for(int i = 0; i < _fds.size(); ++i)
+      for(int i = 0; i < _devices.size(); ++i)
       {
-        int fd = _fds.at((i + _previousDevice + 1) % _fds.size());
+        unsigned int di = (i + _previousDevice + 1) % _devices.size();
+        int fd = _devices.at(di).fd;
         if(FD_ISSET(fd, &fds))
         {
-          readyFd = fd;
+          ready = di;
           break;
         }
       }
     }
 
+    Device const& device = _devices.at(ready);
+
     // Read a set of events from device
-    int numBytes = read(readyFd, _events.data(), sizeof(input_event) * _events.size());
+    int numBytes = read(device.fd, _events.data(), sizeof(input_event) * _events.size());
 
     if(numBytes <= 0)
     {
-      return {POLL_ERROR, {0}};
+      return {POLL_ERROR, {0}, device.role};
     }
 
     _numEvents = numBytes / sizeof(input_event);
     _currentEvent = 0;
-    _previousDevice = readyFd;
+    _currentRole = device.role;
+    _previousDevice = ready;
   }
-  return {POLL_OK, _events[_currentEvent++]};
+  return {POLL_OK, _events[_currentEvent++], _currentRole};
 }
 
 bool EvdevDevice::ready() const
 {
-  return !_fds.empty();
+  return !_devices.empty();
 }
 bool EvdevDevice::grab(bool value)
 {
   bool success = true;
-  for(int fd : _fds)
+  for(auto const& device : _devices)
   {
-    success &= ioctl(fd, EVIOCGRAB, value ? 1 : 0) >= 0;
+    success &= ioctl(device.fd, EVIOCGRAB, value ? 1 : 0) >= 0;
   }
 
   // If unsuccessful, attempt to revert
   if(!success)
   {
-    for(int fd : _fds)
+    for(auto const& device : _devices)
     {
-      ioctl(fd, EVIOCGRAB, value ? 0 : 1);
+      ioctl(device.fd, EVIOCGRAB, value ? 0 : 1);
     }
   }
 
-  return success && !_fds.empty();
+  return success && !_devices.empty();
 }
 
 #endif

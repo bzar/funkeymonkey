@@ -10,9 +10,9 @@ void init(char const** argv, unsigned int argc)
     { EV_KEY, { KEY_K } }
   });
 }
-void handle(input_event const& e, int)
+void handle(input_event const& e, unsigned int role)
 {
-  std::cout << "Event! " << e.type << " " << e.code << " " << e.value << " " << std::endl;
+  std::cout << "Event from device with role " << role << ": " << e.type << " " << e.code << " " << e.value << " " << std::endl;
   if(out && e.type == EV_KEY && e.value == 0)
   {
     out->send(EV_KEY, KEY_K, 1);

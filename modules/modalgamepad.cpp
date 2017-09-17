@@ -12,6 +12,9 @@
 #include <cctype>
 #include <unordered_map>
 
+// Default role: both nubs, Role 1: left nub, Role 2: right nub
+enum Role { ROLE_ANY, ROLE_LEFT_NUB, ROLE_RIGHT_NUB };
+
 struct Mouse
 {
   // Any thread using device must hold mutex
@@ -130,45 +133,68 @@ void init(char const** argv, unsigned int argc)
   }
 }
 
-void handle(input_event const& e, int)
+void handle(input_event const& e, unsigned int role)
 {
-  switch(e.type)
+  if(role == ROLE_ANY || role == ROLE_LEFT_NUB)
   {
-    case EV_ABS:
-      switch(e.code)
-      {
-        case ABS_X:
-          handleNubAxis(global.settings.leftNubModeX, e.value,
-              global.mouse, global.gamepad, global.settings);
-          break;
-        case ABS_Y:
-          handleNubAxis(global.settings.leftNubModeY, e.value,
-              global.mouse, global.gamepad, global.settings);
-          break;
-        case ABS_RX:
-          handleNubAxis(global.settings.rightNubModeX, e.value,
-              global.mouse, global.gamepad, global.settings);
-          break;
-        case ABS_RY:
-          handleNubAxis(global.settings.rightNubModeY, e.value,
-              global.mouse, global.gamepad, global.settings);
-          break;
-        default: break;
-      };
-      break;
-    case EV_KEY:
-      switch(e.code)
-      {
-        case BTN_THUMBL:
-          handleNubClick(global.settings.leftNubClickMode, e.value,
-              global.mouse, global.gamepad, global.settings);
-          break;
-        case BTN_THUMBR:
-          handleNubClick(global.settings.rightNubClickMode, e.value,
-              global.mouse, global.gamepad, global.settings);
-          break;
-        default: break;
-      }
+    switch(e.type)
+    {
+      case EV_ABS:
+        switch(e.code)
+        {
+          case ABS_RX:
+            handleNubAxis(global.settings.rightNubModeX, e.value,
+                global.mouse, global.gamepad, global.settings);
+            break;
+          case ABS_RY:
+            handleNubAxis(global.settings.rightNubModeY, e.value,
+                global.mouse, global.gamepad, global.settings);
+            break;
+          default: break;
+        };
+        break;
+      case EV_KEY:
+        switch(e.code)
+        {
+          case BTN_THUMBR:
+            handleNubClick(global.settings.rightNubClickMode, e.value,
+                global.mouse, global.gamepad, global.settings);
+            break;
+          default: break;
+        }
+      default: break;
+    }
+  }
+
+  if(role == ROLE_ANY || role == ROLE_RIGHT_NUB)
+  {
+    switch(e.type)
+    {
+      case EV_ABS:
+        switch(e.code)
+        {
+          case ABS_X:
+            handleNubAxis(global.settings.leftNubModeX, e.value,
+                global.mouse, global.gamepad, global.settings);
+            break;
+          case ABS_Y:
+            handleNubAxis(global.settings.leftNubModeY, e.value,
+                global.mouse, global.gamepad, global.settings);
+            break;
+          default: break;
+        };
+        break;
+      case EV_KEY:
+        switch(e.code)
+        {
+          case BTN_THUMBL:
+            handleNubClick(global.settings.leftNubClickMode, e.value,
+                global.mouse, global.gamepad, global.settings);
+            break;
+          default: break;
+        }
+      default: break;
+    }
   }
 }
 

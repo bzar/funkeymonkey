@@ -21,14 +21,20 @@ make
   -i, --device PATH            Input device to read from, eg.
                                /dev/input/event0, multiple can be provided
   -m, --match-devices PATTERN  Regular expression to match device strings
-                               (format: '&lt;vendor&gt;,&lt;product&gt;,&lt;version&gt;,&lt;name&gt;')
+                               (format: '<vendor>,<product>,<version>,<name>')
                                with, matching will be read, multiple can be
                                provided
+  -r, --roles ROLES            A comma-separated list of role numbers. Roles
+                               will be assigned to devices in order of
+                               definition, path-based first. Devices matching a
+                               match-devices get one role.
   -p, --plugin PATH            Path to plugin
   -g, --grab                   Grab the input device, preventing others from
                                accessing it
+  -v, --verbose                Print extra runtime information
   -d, --daemonize              Daemonize process
   -l, --list-devices           List available devices
+  -X, --plugin-parameter ARG   Plugin parameter
   -h, --help                   Print help
 </pre>
 
@@ -72,6 +78,10 @@ Using the `-g` option ensures no other applications can listen
 directly to the chosen input device.
 
 To match a device by metadata instead of a file path, use `-m`, for example `-m keyboard` would match any devices with "keyboard" in their name.
+
+Device roles are used to differentiate between event sources inside a plugin. For example, you could want to have two separate keyboard inputs to your plugin. Specify your role number list with `-r`, for example `-r 1,2` would give the first matched device role 1 and second matched device role 2. Devices are sorted with those given using `-i` first, those with `-m` second. For example, if you had `-r 1,2,3 -m foo -i /dev/input/event0 -m bar`, event0 would get role 1, any devices matching "foo" role 2 and any devices matching "bar" role 3. By default all devices have role 0.
+
+Plugins can receive command line parameters through the `-X` option. They are used for example for specifying configuration files. These should be documented by plugins.
 
 Notice you may need additional privileges in order to create uinput devices. Any modules that generate input events need this. Check your distribution documentation for details or run with root privileges. Your call.
 

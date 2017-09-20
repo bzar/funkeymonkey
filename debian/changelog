@@ -1,5 +1,6 @@
-funkeymonkey (0.1.0) UNRELEASED; urgency=low
+funkeymonkey (0.1.1) UNRELEASED; urgency=low
 
   * Initial release. 
+  * Now have roles
 
- -- Sébastien Huss <sebastien.huss@gmail.com>  Sat, 26 Aug 2017 10:05:07 +0200
+ -- Sébastien Huss <sebastien.huss@gmail.com>  Tue, 19 Sep 2017 18:25:41 +0200

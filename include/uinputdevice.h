@@ -20,7 +20,14 @@ public:
     unsigned int type;
     std::vector<unsigned int> codes;
   };
-  explicit UinputDevice(std::string const& path, unsigned int bus, std::string const& name, unsigned int vendor, unsigned int product, unsigned int version, std::vector<PossibleEvent> const& possibleEvents);
+  struct AbsoluteAxisCalibrationData {
+    int axis;
+    int min;
+    int max;
+    int fuzz;
+    int flat;
+  };
+  explicit UinputDevice(std::string const& path, unsigned int bus, std::string const& name, unsigned int vendor, unsigned int product, unsigned int version, std::vector<PossibleEvent> const& possibleEvents, std::vector<AbsoluteAxisCalibrationData> const& absoluteAxesCalibrationData = std::vector<AbsoluteAxisCalibrationData>());
   ~UinputDevice();
   bool send(unsigned int type, unsigned int code, int value);
   bool ready() const; 
@@ -30,7 +37,7 @@ private:
   int _fd;
 };
 
-UinputDevice::UinputDevice(std::string const& path, unsigned int bus, std::string const& name, unsigned int vendor, unsigned int product, unsigned int version, std::vector<PossibleEvent> const& possibleEvents)
+UinputDevice::UinputDevice(std::string const& path, unsigned int bus, std::string const& name, unsigned int vendor, unsigned int product, unsigned int version, std::vector<PossibleEvent> const& possibleEvents, std::vector<AbsoluteAxisCalibrationData> const& absoluteAxesCalibrationData)
 {
   _fd = ::open(path.data(), O_WRONLY | O_NONBLOCK);
   if(_fd)
@@ -42,6 +49,13 @@ UinputDevice::UinputDevice(std::string const& path, unsigned int bus, std::strin
     device.id.product = product;
     device.id.vendor = vendor;
     device.id.version = version;
+
+    for(AbsoluteAxisCalibrationData const& aacd : absoluteAxesCalibrationData) {
+      device.absmin[aacd.axis] = aacd.min;
+      device.absmax[aacd.axis] = aacd.max;
+      device.absfuzz[aacd.axis] = aacd.fuzz;
+      device.absflat[aacd.axis] = aacd.flat;
+    }
 
     if(write(_fd, &device, sizeof(device)) != sizeof(device))
     {

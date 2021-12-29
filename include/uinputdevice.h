@@ -33,13 +33,20 @@ public:
   bool ready() const; 
   operator bool() const; 
   void destroy();
-private:
+protected:
   int _fd;
+  void open(std::string const& path);
 };
+
+void UinputDevice::open(std::string const& path) {
+  destroy();
+  _fd = ::open(path.data(), O_WRONLY | O_NONBLOCK);
+}
 
 UinputDevice::UinputDevice(std::string const& path, unsigned int bus, std::string const& name, unsigned int vendor, unsigned int product, unsigned int version, std::vector<PossibleEvent> const& possibleEvents, std::vector<AbsoluteAxisCalibrationData> const& absoluteAxesCalibrationData)
 {
-  _fd = ::open(path.data(), O_WRONLY | O_NONBLOCK);
+  _fd = 0;
+  open(path);
   if(_fd)
   {
     uinput_user_dev device;
